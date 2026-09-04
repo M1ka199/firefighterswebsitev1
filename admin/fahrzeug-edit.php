@@ -34,8 +34,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $photoUrl = $isEdit ? $fahrzeug['photo_url'] : null;
 
-    // Foto Upload
-    if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+    // 1. Priorisiere zugeschnittenes Bild aus dem interaktiven Cropper
+    if (!empty($_POST['cropped_image']) && str_starts_with($_POST['cropped_image'], 'data:image/')) {
+        $parts = explode(',', $_POST['cropped_image'], 2);
+        if (count($parts) === 2) {
+            $decoded = base64_decode($parts[1]);
+            if ($decoded !== false) {
+                $fileName = 'fahrzeug_' . time() . '_' . bin2hex(random_bytes(3)) . '.jpg';
+                $targetDir = __DIR__ . '/../uploads/fahrzeuge/';
+                if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
+                if (file_put_contents($targetDir . $fileName, $decoded)) {
+                    $photoUrl = '/uploads/fahrzeuge/' . $fileName;
+                }
+            }
+        }
+    } 
+    // 2. Regulärer Fallback-Upload falls kein Crop aktiv
+    elseif (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
         $allowed = ['image/jpeg' => '.jpg', 'image/png' => '.png', 'image/webp' => '.webp'];
         $finfo = new finfo(FILEINFO_MIME_TYPE);
         $mime = $finfo->file($_FILES['photo']['tmp_name']);
@@ -117,14 +132,8 @@ $csrf = Auth::csrfToken();
         </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-            Taktische Rolle / Funktion <span class="text-red-500">*</span>
-          </label>
-          <input type="text" name="tactical_role" required value="<?= $isEdit ? e($fahrzeug['tactical_role']) : '' ?>" placeholder="z.B. Erstangreifer" class="light-input w-full rounded-xl px-4 py-2.5 text-sm font-medium">
-        </div>
-
+      <!-- Funkrufname & Ansprechpartner -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
           <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
             Funkrufname (OPTA)
@@ -140,37 +149,64 @@ $csrf = Auth::csrfToken();
         </div>
       </div>
 
-      <!-- Beschreibung & Technische Daten -->
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-          Ausführliche Beschreibung <span class="text-red-500">*</span>
-        </label>
-        <textarea name="description" rows="4" required placeholder="Einsatzzweck, Aufgaben und Besonderheiten des Fahrzeugs..." class="light-input w-full rounded-xl p-4 text-xs sm:text-sm resize-y leading-relaxed"><?= $isEdit ? e($fahrzeug['description']) : '' ?></textarea>
-      </div>
-
+      <!-- Technische Daten -->
       <div>
         <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
           Technische Daten & Ausstattung (pro Zeile eine Information)
         </label>
-        <textarea name="technical_data" rows="5" placeholder="Fahrgestell: MAN&#10;Besatzung: 1/8&#10;Löschwasser: 1.200 l&#10;Pumpe: FPN 10-2000" class="light-input w-full rounded-xl p-4 text-xs font-mono resize-y leading-relaxed bg-slate-50"><?= $isEdit ? e($fahrzeug['technical_data']) : '' ?></textarea>
-        <span class="text-[11px] text-slate-400 mt-1 block">Wird auf der Über-uns-Seite als übersichtliche Ausstattungsliste gerendert.</span>
+        <textarea name="technical_data" rows="6" placeholder="Fahrgestell: MAN / Aufbau: Schlingmann&#10;Besatzung: 1/8 (Gruppe)&#10;Löschwasser: 1.200 Liter&#10;Pumpe: FPN 10-2000&#10;Besonderheiten: 4 Atemschutzgeräte, Schnellangriff" class="light-input w-full rounded-xl p-4 text-xs font-mono resize-y leading-relaxed bg-slate-50"><?= $isEdit ? e($fahrzeug['technical_data']) : '' ?></textarea>
+        <span class="text-[11px] text-slate-400 mt-1 block">Wird auf der Über-uns-Seite als übersichtliche Ausstattungsliste in den großen 2er-Kacheln gerendert.</span>
       </div>
 
-      <!-- Foto Upload -->
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-          Fahrzeugfoto (Querformat empfohlen, JPG/PNG/WebP)
-        </label>
-        <?php if ($isEdit && !empty($fahrzeug['photo_url'])): ?>
-          <div class="mb-3 flex items-center gap-4 p-3 rounded-xl bg-slate-50 border border-slate-200">
-            <img src="<?= e($fahrzeug['photo_url']) ?>" alt="Aktuelles Foto" class="w-24 h-16 object-cover rounded-lg border border-slate-300">
-            <div>
-              <strong class="text-xs text-navy block font-bold">Aktuelles Foto vorhanden</strong>
-              <span class="text-[11px] text-slate-500 truncate block"><?= e($fahrzeug['photo_url']) ?></span>
+      <!-- Foto Upload mit integriertem Live-Cropper -->
+      <div class="image-crop-wrapper space-y-3 bg-slate-50/70 p-5 rounded-2xl border border-slate-200">
+        <input type="hidden" name="cropped_image" value="">
+
+        <div class="flex items-center justify-between">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+            Fahrzeugfoto (Großes Querformat, z.B. 16:10 / 16:9)
+          </label>
+          <span class="text-[10px] font-bold text-sand-dark uppercase bg-sand/10 px-2 py-0.5 rounded">
+            Mit Live-Zuschnitt
+          </span>
+        </div>
+
+        <!-- Aktuelle / Neue Bildvorschau -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 rounded-xl bg-white border border-slate-200 shadow-2xs">
+          <div class="w-36 h-24 rounded-lg overflow-hidden bg-slate-100 border border-slate-300 flex-shrink-0 relative">
+            <img src="<?= ($isEdit && !empty($fahrzeug['photo_url'])) ? e($fahrzeug['photo_url']) : '' ?>" 
+                 alt="Fahrzeugfoto Vorschau" 
+                 class="crop-form-preview w-full h-full object-cover <?= ($isEdit && !empty($fahrzeug['photo_url'])) ? '' : 'hidden' ?>">
+            <div class="no-photo-placeholder w-full h-full flex items-center justify-center text-[11px] text-slate-400 <?= ($isEdit && !empty($fahrzeug['photo_url'])) ? 'hidden' : '' ?>">
+              Kein Bild
             </div>
           </div>
-        <?php endif; ?>
-        <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" class="light-input w-full rounded-xl px-4 py-2 text-xs">
+
+          <div class="flex-1 space-y-1">
+            <span class="text-xs font-bold text-navy block">Bildausschnitt & Vorschau</span>
+            <p class="text-[11px] text-slate-500 leading-tight">
+              Wähle ein neues Bild aus – der interaktive Zuschnitt öffnet sich automatisch mit Echtzeit-Vorschau.
+            </p>
+            <div class="crop-success-badge hidden pt-1">
+              <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
+                ✓ Bildausschnitt festgelegt (wird beim Speichern übernommen)
+              </span>
+            </div>
+          </div>
+
+          <?php if ($isEdit && !empty($fahrzeug['photo_url'])): ?>
+            <button type="button" class="btn-adjust-crop px-3 py-2 rounded-xl bg-slate-100 hover:bg-navy hover:text-white text-navy text-xs font-bold transition self-stretch sm:self-auto flex items-center justify-center gap-1.5 border border-slate-200">
+              <span>✂️</span> Ausschnitt anpassen
+            </button>
+          <?php endif; ?>
+        </div>
+
+        <input type="file" 
+               name="photo" 
+               accept="image/jpeg,image/png,image/webp" 
+               data-cropper="true" 
+               data-aspect-ratio="1.6" 
+               class="light-input w-full rounded-xl px-4 py-2 text-xs">
       </div>
 
       <!-- Sortierung & Status -->

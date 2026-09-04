@@ -46,6 +46,9 @@ $flash = getFlash();
     }
   </script>
   <link rel="stylesheet" href="/assets/css/custom.css">
+  <!-- Cropper.js for image cropping with live preview -->
+  <link rel="stylesheet" href="/assets/vendor/cropperjs/cropper.min.css">
+  <script src="/assets/vendor/cropperjs/cropper.min.js"></script>
 </head>
 <body class="bg-[#f8fafc] text-slate-800 min-h-screen font-sans flex flex-col">
 

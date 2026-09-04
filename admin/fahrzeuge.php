@@ -61,7 +61,7 @@ $csrf = Auth::csrfToken();
           <tr>
             <th class="py-4 px-6">Foto</th>
             <th class="py-4 px-6">Fahrzeug & Bezeichnung</th>
-            <th class="py-4 px-6">Rolle & Funkrufname</th>
+            <th class="py-4 px-6">Funkrufname & Zuständigkeit</th>
             <th class="py-4 px-6 text-center">Sortierung</th>
             <th class="py-4 px-6 text-center">Status</th>
             <th class="py-4 px-6 text-right">Aktionen</th>
@@ -91,12 +91,13 @@ $csrf = Auth::csrfToken();
                   <span class="text-xs text-slate-500 font-medium"><?= e($f['bezeichnung']) ?></span>
                 </td>
                 <td class="py-4 px-6">
-                  <span class="inline-block px-2.5 py-1 rounded-md text-[11px] font-bold bg-sand/10 text-sand-dark border border-sand/20 mb-1">
-                    <?= e($f['tactical_role']) ?>
-                  </span>
-                  <div class="text-[11px] text-slate-500 font-mono">
-                    <?= e($f['callsign'] ?: '–') ?>
-                  </div>
+                  <?php if (!empty($f['callsign'])): ?>
+                    <div class="text-xs font-mono font-bold text-sand-dark">
+                      <?= e($f['callsign']) ?>
+                    </div>
+                  <?php else: ?>
+                    <span class="text-slate-400 text-xs">–</span>
+                  <?php endif; ?>
                   <?php if (!empty($f['responsible_person'])): ?>
                     <div class="text-[11px] text-navy font-semibold mt-1 flex items-center gap-1">
                       <span>👤</span> <?= e($f['responsible_person']) ?>

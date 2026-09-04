@@ -47,5 +47,6 @@ declare(strict_types=1);
       <script src="<?= $sc ?>"></script>
     <?php endforeach; ?>
   <?php endif; ?>
+  <script src="/assets/js/admin-cropper.js"></script>
 </body>
 </html>

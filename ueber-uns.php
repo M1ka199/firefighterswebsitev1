@@ -134,62 +134,77 @@ require_once __DIR__ . '/includes/banner.php';
       <h2 class="text-3xl sm:text-4xl font-extrabold text-navy uppercase tracking-tight mt-1">
         Fahrzeuge & Ausrüstung
       </h2>
-      <div class="w-12 h-1 bg-sand mx-auto mt-3 rounded-full"></div>
+      <p class="text-slate-600 text-sm mt-2 font-light">
+        Moderne Einsatzfahrzeuge der Freiwilligen Feuerwehr Wulften am Harz für effektiven Brandschutz und technische Hilfeleistung.
+      </p>
+      <div class="w-12 h-1 bg-sand mx-auto mt-4 rounded-full"></div>
     </div>
 
     <?php if (empty($fahrzeuge)): ?>
       <p class="text-center text-slate-500 py-8">Derzeit sind keine Fahrzeuge im System hinterlegt.</p>
     <?php else: ?>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      <!-- 2 Kacheln pro Reihe für maximale Bildgröße und Übersichtlichkeit -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10">
         <?php foreach ($fahrzeuge as $f): ?>
-          <div class="light-tile rounded-2xl p-4 sm:p-5 flex flex-col justify-between group transition-all duration-300">
+          <div class="light-tile rounded-3xl p-6 sm:p-8 flex flex-col justify-between group transition-all duration-300 hover:shadow-xl hover:border-sand/40 border border-slate-200/80 bg-white">
             <div>
-              <!-- Foto (kompakt, ohne Overlays) -->
-              <div class="w-full h-36 sm:h-40 rounded-xl bg-slate-100 overflow-hidden mb-3.5 border border-slate-200 shadow-sm relative">
+              <!-- Großes Fahrzeugfoto -->
+              <div class="w-full h-64 sm:h-72 md:h-80 rounded-2xl bg-slate-100 overflow-hidden mb-6 border border-slate-200 shadow-sm relative">
                 <?php if (!empty($f['photo_url'])): ?>
-                  <img src="<?= e($f['photo_url']) ?>" alt="<?= e($f['name']) ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                  <img src="<?= e($f['photo_url']) ?>" alt="<?= e($f['name']) ?>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                 <?php else: ?>
-                  <div class="w-full h-full flex items-center justify-center text-slate-400 text-xs">Kein Foto hinterlegt</div>
+                  <div class="w-full h-full flex items-center justify-center text-slate-400 text-sm font-medium">Kein Foto hinterlegt</div>
+                <?php endif; ?>
+
+                <!-- Funkrufname als Glasmorphism-Badge -->
+                <?php if (!empty($f['callsign'])): ?>
+                  <div class="absolute top-4 right-4 bg-navy/90 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/15 shadow-md flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span class="text-xs font-mono font-bold text-sand-light tracking-wide"><?= e($f['callsign']) ?></span>
+                  </div>
                 <?php endif; ?>
               </div>
 
-              <div>
-                <h4 class="text-base font-bold text-navy uppercase mb-0.5">
+              <!-- Kopfzeile: Kurzname & Volle Bezeichnung -->
+              <div class="mb-5">
+                <h3 class="text-2xl sm:text-3xl font-extrabold text-navy uppercase tracking-tight">
                   <?= e($f['name']) ?>
-                </h4>
-                
-                <?php if (!empty($f['callsign'])): ?>
-                  <span class="block text-xs font-mono font-bold text-sand-dark tracking-wide mb-2">
-                    <?= e($f['callsign']) ?>
-                  </span>
-                <?php endif; ?>
-
-                <p class="text-xs text-slate-600 leading-relaxed font-light mb-3">
-                  <?= nl2br(e($f['description'])) ?>
+                </h3>
+                <p class="text-sm sm:text-base font-semibold text-slate-500 mt-1">
+                  <?= e($f['bezeichnung']) ?>
                 </p>
+              </div>
 
-                <?php if (!empty($f['technical_data'])): ?>
-                  <div class="mb-3 bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-[11px] text-slate-700 space-y-0.5">
-                    <span class="block text-[9px] font-bold text-sand uppercase tracking-widest mb-1">Details:</span>
+              <!-- Technische Daten & Ausstattungsliste -->
+              <?php if (!empty($f['technical_data'])): ?>
+                <div class="bg-slate-50/90 border border-slate-200/90 rounded-2xl p-4 sm:p-5 text-xs text-slate-700 mb-6">
+                  <div class="flex items-center gap-2 mb-3 pb-2 border-b border-slate-200 text-xs font-bold text-sand uppercase tracking-wider">
+                    <svg class="w-4 h-4 text-sand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span>Technische Daten & Ausstattung</span>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                     <?php 
                       $lines = array_filter(array_map('trim', explode("\n", $f['technical_data'])));
                       foreach ($lines as $line): 
                     ?>
-                      <div class="flex items-start gap-1 leading-tight">
+                      <div class="flex items-start gap-2 leading-snug">
                         <span class="text-sand font-bold">•</span>
-                        <span><?= e($line) ?></span>
+                        <span class="font-medium text-slate-700"><?= e($line) ?></span>
                       </div>
                     <?php endforeach; ?>
                   </div>
-                <?php endif; ?>
-              </div>
+                </div>
+              <?php endif; ?>
             </div>
 
-            <!-- Footer der Kachel mit Zuständiger Person -->
+            <!-- Zuständigkeit / Gerätewart am unteren Kachelende -->
             <?php if (!empty($f['responsible_person'])): ?>
-              <div class="pt-2.5 border-t border-slate-100 flex items-center gap-1 text-slate-700 font-semibold bg-amber-50/70 border border-amber-200/80 px-2.5 py-1 rounded-lg text-[11px]">
-                <span class="text-sand">👤</span>
-                <span class="truncate"><?= e($f['responsible_person']) ?></span>
+              <div class="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span class="text-slate-500 uppercase tracking-wider font-bold text-[10px]">Zuständigkeit</span>
+                <div class="inline-flex items-center gap-2 text-navy font-bold bg-amber-50 border border-amber-200/80 px-3.5 py-1.5 rounded-xl shadow-xs">
+                  <span class="text-sand text-sm">👤</span>
+                  <span><?= e($f['responsible_person']) ?></span>
+                </div>
               </div>
             <?php endif; ?>
           </div>

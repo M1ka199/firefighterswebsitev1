@@ -36,8 +36,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $imageUrl = $isEdit ? $einsatz['image_url'] : null;
 
-    // Bild-Upload behandeln
-    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+    // 1. Priorisiere zugeschnittenes Bild aus dem interaktiven Cropper
+    if (!empty($_POST['cropped_image']) && str_starts_with($_POST['cropped_image'], 'data:image/')) {
+        $parts = explode(',', $_POST['cropped_image'], 2);
+        if (count($parts) === 2) {
+            $decoded = base64_decode($parts[1]);
+            if ($decoded !== false) {
+                $fileName = 'einsatz_' . $year . '_' . time() . '_' . bin2hex(random_bytes(3)) . '.jpg';
+                $targetDir = __DIR__ . '/../uploads/einsaetze/';
+                if (!is_dir($targetDir)) mkdir($targetDir, 0755, true);
+                if (file_put_contents($targetDir . $fileName, $decoded)) {
+                    $imageUrl = '/uploads/einsaetze/' . $fileName;
+                }
+            }
+        }
+    }
+    // 2. Regulärer Fallback-Upload falls kein Crop aktiv
+    elseif (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
         $allowed = ['image/jpeg' => '.jpg', 'image/png' => '.png', 'image/webp' => '.webp'];
         $finfo = new finfo(FILEINFO_MIME_TYPE);
         $mime = $finfo->file($_FILES['image']['tmp_name']);
@@ -173,19 +188,56 @@ $csrf = Auth::csrfToken();
         <textarea name="description" rows="6" required placeholder="Lage beim Eintreffen, durchgeführte Maßnahmen, Übergabe der Einsatzstelle..." class="light-input w-full rounded-xl px-4 py-3 text-sm font-medium resize-y"><?= $isEdit ? e($einsatz['description']) : '' ?></textarea>
       </div>
 
-      <!-- Bild Upload -->
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-          Einsatzfoto (JPEG, PNG oder WebP)
-        </label>
-        <?php if ($isEdit && !empty($einsatz['image_url'])): ?>
-          <div class="mb-3 flex items-center gap-4 p-3 rounded-xl bg-slate-50 border border-slate-200">
-            <img src="<?= e($einsatz['image_url']) ?>" alt="Aktuelles Bild" class="w-16 h-16 object-cover rounded-lg border border-slate-200">
-            <span class="text-xs text-slate-600">Aktuelles Bild vorhanden. Durch Hochladen einer neuen Datei wird dieses ersetzt.</span>
+      <!-- Bild Upload mit interaktivem Live-Cropper -->
+      <div class="image-crop-wrapper space-y-3 bg-slate-50/70 p-5 rounded-2xl border border-slate-200">
+        <input type="hidden" name="cropped_image" value="">
+
+        <div class="flex items-center justify-between">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+            Einsatzfoto (Querformat 16:9 empfohlen)
+          </label>
+          <span class="text-[10px] font-bold text-sand-dark uppercase bg-sand/10 px-2 py-0.5 rounded">
+            Mit Live-Zuschnitt
+          </span>
+        </div>
+
+        <!-- Aktuelle / Neue Bildvorschau -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3 rounded-xl bg-white border border-slate-200 shadow-2xs">
+          <div class="w-36 h-24 rounded-lg overflow-hidden bg-slate-100 border border-slate-300 flex-shrink-0 relative">
+            <img src="<?= ($isEdit && !empty($einsatz['image_url'])) ? e($einsatz['image_url']) : '' ?>" 
+                 alt="Einsatzfoto Vorschau" 
+                 class="crop-form-preview w-full h-full object-cover <?= ($isEdit && !empty($einsatz['image_url'])) ? '' : 'hidden' ?>">
+            <div class="no-photo-placeholder w-full h-full flex items-center justify-center text-[11px] text-slate-400 <?= ($isEdit && !empty($einsatz['image_url'])) ? 'hidden' : '' ?>">
+              Kein Bild
+            </div>
           </div>
-        <?php endif; ?>
-        <input type="file" name="image" accept="image/jpeg,image/png,image/webp" class="light-input w-full rounded-xl px-4 py-2 text-xs">
-        <p class="text-[11px] text-slate-500 mt-1">Hinweis: Kennzeichen und Gesichter müssen unkenntlich gemacht sein.</p>
+
+          <div class="flex-1 space-y-1">
+            <span class="text-xs font-bold text-navy block">Einsatzfoto & Vorschau</span>
+            <p class="text-[11px] text-slate-500 leading-tight">
+              Wähle ein Einsatzfoto aus – der interaktive Zuschnitt öffnet sich mit Echtzeit-Live-Vorschau.
+            </p>
+            <div class="crop-success-badge hidden pt-1">
+              <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
+                ✓ Einsatzfoto festgelegt (wird beim Speichern übernommen)
+              </span>
+            </div>
+          </div>
+
+          <?php if ($isEdit && !empty($einsatz['image_url'])): ?>
+            <button type="button" class="btn-adjust-crop px-3 py-2 rounded-xl bg-slate-100 hover:bg-navy hover:text-white text-navy text-xs font-bold transition self-stretch sm:self-auto flex items-center justify-center gap-1.5 border border-slate-200">
+              <span>✂️</span> Ausschnitt anpassen
+            </button>
+          <?php endif; ?>
+        </div>
+
+        <input type="file" 
+               name="image" 
+               accept="image/jpeg,image/png,image/webp" 
+               data-cropper="true" 
+               data-aspect-ratio="1.77778" 
+               class="light-input w-full rounded-xl px-4 py-2 text-xs">
+        <p class="text-[11px] text-slate-500">Hinweis: Kennzeichen von Privatfahrzeugen und Gesichter von Betroffenen müssen unkenntlich gemacht sein.</p>
       </div>
 
       <div class="flex items-center gap-3 pt-2">
