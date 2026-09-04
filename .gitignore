@@ -1,0 +1,40 @@
+# Operating System Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+._*
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# SQLite temporary, WAL and lock files
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.db-journal
+*.db-wal
+
+# Log files
+*.log
+error_log
+access_log
+
+# Environment & local secrets
+.env
+.env.local
+.env.*.local
+
+# Temporary & backup files
+*.tmp
+*.bak
+*.swp
+*~

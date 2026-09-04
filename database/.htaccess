@@ -1,0 +1,5 @@
+# Schutz der SQLite-Datenbank vor direktem Download ueber den Webserver
+<Files ~ "\.(sqlite|sqlite3|db)$">
+    Order deny,allow
+    Deny from all
+</Files>
