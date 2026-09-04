@@ -1,9 +1,10 @@
 <?php
 declare(strict_types=1);
 
-$adminTitle = 'Seiten & SEO Verwaltung';
-$activeNav = 'seiten';
-require_once __DIR__ . '/includes/admin_header.php';
+require_once __DIR__ . '/../../src/Database.php';
+require_once __DIR__ . '/../../src/Auth.php';
+require_once __DIR__ . '/../../src/Helpers.php';
+
 Auth::requireAdmin();
 
 $db = Database::getConnection();
@@ -34,6 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header("Location: /admin/seiten.php?page={$slug}");
     exit;
 }
+
+$adminTitle = 'Seiten & SEO Verwaltung';
+$activeNav = 'seiten';
+require_once __DIR__ . '/includes/admin_header.php';
 
 // Alle Seiten abfragen
 $allPages = $db->query('SELECT slug, page_title, banner_title FROM seiten_seo ORDER BY id ASC')->fetchAll();

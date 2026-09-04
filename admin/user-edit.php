@@ -1,9 +1,10 @@
 <?php
 declare(strict_types=1);
 
-$adminTitle = 'Benutzer bearbeiten';
-$activeNav = 'users';
-require_once __DIR__ . '/includes/admin_header.php';
+require_once __DIR__ . '/../../src/Database.php';
+require_once __DIR__ . '/../../src/Auth.php';
+require_once __DIR__ . '/../../src/Helpers.php';
+
 Auth::requireAdmin();
 
 $db = Database::getConnection();
@@ -64,6 +65,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+$adminTitle = $isEdit ? 'Benutzer bearbeiten' : 'Neuen Benutzer anlegen';
+$activeNav = 'users';
+require_once __DIR__ . '/includes/admin_header.php';
 
 $csrf = Auth::csrfToken();
 ?>

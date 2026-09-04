@@ -1,9 +1,10 @@
 <?php
 declare(strict_types=1);
 
-$adminTitle = 'System-Einstellungen';
-$activeNav = 'settings';
-require_once __DIR__ . '/includes/admin_header.php';
+require_once __DIR__ . '/../../src/Database.php';
+require_once __DIR__ . '/../../src/Auth.php';
+require_once __DIR__ . '/../../src/Helpers.php';
+
 Auth::requireAdmin();
 
 $db = Database::getConnection();
@@ -37,6 +38,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Location: /admin/settings.php');
     exit;
 }
+
+$adminTitle = 'System-Einstellungen';
+$activeNav = 'settings';
+require_once __DIR__ . '/includes/admin_header.php';
 
 // Aktuelle Einstellungen laden
 $settings = [];

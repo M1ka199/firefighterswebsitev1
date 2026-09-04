@@ -1,9 +1,11 @@
 <?php
 declare(strict_types=1);
 
-$adminTitle = 'Termin-Verwaltung';
-$activeNav = 'termine';
-require_once __DIR__ . '/includes/admin_header.php';
+require_once __DIR__ . '/../../src/Database.php';
+require_once __DIR__ . '/../../src/Auth.php';
+require_once __DIR__ . '/../../src/Helpers.php';
+
+Auth::requireLogin();
 
 $db = Database::getConnection();
 
@@ -44,6 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Location: /admin/termine.php');
     exit;
 }
+
+$adminTitle = 'Termin-Verwaltung';
+$activeNav = 'termine';
+require_once __DIR__ . '/includes/admin_header.php';
 
 $stmt = $db->query('SELECT * FROM termine ORDER BY start_datetime DESC');
 $termine = $stmt->fetchAll();

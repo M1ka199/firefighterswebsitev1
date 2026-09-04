@@ -1,9 +1,11 @@
 <?php
 declare(strict_types=1);
 
-$adminTitle = 'Ortskommando Verwaltung';
-$activeNav = 'mitglieder';
-require_once __DIR__ . '/includes/admin_header.php';
+require_once __DIR__ . '/../../src/Database.php';
+require_once __DIR__ . '/../../src/Auth.php';
+require_once __DIR__ . '/../../src/Helpers.php';
+
+Auth::requireLogin();
 
 $db = Database::getConnection();
 
@@ -30,6 +32,10 @@ if (isset($_GET['toggle_home'])) {
         exit;
     }
 }
+
+$adminTitle = 'Ortskommando Verwaltung';
+$activeNav = 'mitglieder';
+require_once __DIR__ . '/includes/admin_header.php';
 
 $stmt = $db->query('SELECT * FROM mitglieder ORDER BY hierarchy_level ASC, sort_order ASC');
 $mitglieder = $stmt->fetchAll();

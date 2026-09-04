@@ -1,9 +1,11 @@
 <?php
 declare(strict_types=1);
 
-$adminTitle = 'Einsatz-Verwaltung';
-$activeNav = 'einsaetze';
-require_once __DIR__ . '/includes/admin_header.php';
+require_once __DIR__ . '/../../src/Database.php';
+require_once __DIR__ . '/../../src/Auth.php';
+require_once __DIR__ . '/../../src/Helpers.php';
+
+Auth::requireLogin();
 
 $db = Database::getConnection();
 
@@ -19,6 +21,10 @@ if (isset($_GET['delete'])) {
         exit;
     }
 }
+
+$adminTitle = 'Einsatz-Verwaltung';
+$activeNav = 'einsaetze';
+require_once __DIR__ . '/includes/admin_header.php';
 
 $stmt = $db->query('SELECT * FROM einsaetze ORDER BY year DESC, incident_number DESC, date DESC');
 $einsaetze = $stmt->fetchAll();

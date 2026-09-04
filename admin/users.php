@@ -1,9 +1,10 @@
 <?php
 declare(strict_types=1);
 
-$adminTitle = 'Benutzerverwaltung';
-$activeNav = 'users';
-require_once __DIR__ . '/includes/admin_header.php';
+require_once __DIR__ . '/../../src/Database.php';
+require_once __DIR__ . '/../../src/Auth.php';
+require_once __DIR__ . '/../../src/Helpers.php';
+
 Auth::requireAdmin();
 
 $db = Database::getConnection();
@@ -33,6 +34,10 @@ if (isset($_GET['delete'])) {
         exit;
     }
 }
+
+$adminTitle = 'Benutzerverwaltung';
+$activeNav = 'users';
+require_once __DIR__ . '/includes/admin_header.php';
 
 // Alle Benutzer laden
 $stmt = $db->query('SELECT * FROM users ORDER BY role ASC, id ASC');

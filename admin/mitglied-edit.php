@@ -1,9 +1,11 @@
 <?php
 declare(strict_types=1);
 
-$adminTitle = 'Mitglied bearbeiten';
-$activeNav = 'mitglieder';
-require_once __DIR__ . '/includes/admin_header.php';
+require_once __DIR__ . '/../../src/Database.php';
+require_once __DIR__ . '/../../src/Auth.php';
+require_once __DIR__ . '/../../src/Helpers.php';
+
+Auth::requireLogin();
 
 $db = Database::getConnection();
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -107,6 +109,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Location: /admin/mitglieder.php');
     exit;
 }
+
+$adminTitle = $isEdit ? 'Mitglied bearbeiten' : 'Neues Mitglied anlegen';
+$activeNav = 'mitglieder';
+require_once __DIR__ . '/includes/admin_header.php';
 
 $csrf = Auth::csrfToken();
 ?>

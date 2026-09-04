@@ -5,6 +5,9 @@ require_once __DIR__ . '/Database.php';
 
 class Auth {
     public static function startSession(): void {
+        if (!ob_get_level()) {
+            ob_start();
+        }
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }

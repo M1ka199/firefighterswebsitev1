@@ -1,9 +1,10 @@
 <?php
 declare(strict_types=1);
 
-$adminTitle = 'Globale CSS-Einstellungen';
-$activeNav = 'css-settings';
-require_once __DIR__ . '/includes/admin_header.php';
+require_once __DIR__ . '/../../src/Database.php';
+require_once __DIR__ . '/../../src/Auth.php';
+require_once __DIR__ . '/../../src/Helpers.php';
+
 Auth::requireAdmin();
 
 $db = Database::getConnection();
@@ -23,6 +24,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Location: /admin/css-settings.php');
     exit;
 }
+
+$adminTitle = 'Globale CSS-Einstellungen';
+$activeNav = 'css-settings';
+require_once __DIR__ . '/includes/admin_header.php';
 
 // Aktuelles CSS laden
 $stmt = $db->prepare('SELECT setting_value FROM system_settings WHERE setting_key = ?');

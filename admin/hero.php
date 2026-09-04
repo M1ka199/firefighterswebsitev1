@@ -1,9 +1,10 @@
 <?php
 declare(strict_types=1);
 
-$adminTitle = 'Hero-Slider Verwaltung';
-$activeNav = 'hero';
-require_once __DIR__ . '/includes/admin_header.php';
+require_once __DIR__ . '/../../src/Database.php';
+require_once __DIR__ . '/../../src/Auth.php';
+require_once __DIR__ . '/../../src/Helpers.php';
+
 Auth::requireAdmin();
 
 $db = Database::getConnection();
@@ -75,6 +76,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Location: /admin/hero.php');
     exit;
 }
+
+$adminTitle = 'Hero-Slider Verwaltung';
+$activeNav = 'hero';
+require_once __DIR__ . '/includes/admin_header.php';
 
 $csrf = Auth::csrfToken();
 ?>
