@@ -13,12 +13,25 @@ $db = Database::getConnection();
 if (isset($_GET['delete'])) {
     $delId = (int)$_GET['delete'];
     if (Auth::validateCsrf($_GET['token'] ?? '')) {
+        // Altes hochgeladenes Bild löschen, falls vorhanden
+        $stmtImg = $db->prepare('SELECT photo_url FROM fahrzeuge WHERE id = ?');
+        $stmtImg->execute([$delId]);
+        $oldPhoto = $stmtImg->fetchColumn();
+        if ($oldPhoto && str_starts_with($oldPhoto, '/uploads/fahrzeuge/')) {
+            $filePath = __DIR__ . '/..' . $oldPhoto;
+            if (file_exists($filePath)) {
+                @unlink($filePath);
+            }
+        }
+
         $stmtDel = $db->prepare('DELETE FROM fahrzeuge WHERE id = ?');
         $stmtDel->execute([$delId]);
         setFlash('success', 'Fahrzeug erfolgreich gelöscht.');
-        header('Location: /admin/fahrzeuge.php');
-        exit;
+    } else {
+        setFlash('error', 'Sicherheits-Token ungültig. Bitte versuchen Sie es erneut.');
     }
+    header('Location: /admin/fahrzeuge.php');
+    exit;
 }
 
 // Toggle Aktiv-Status
@@ -28,9 +41,11 @@ if (isset($_GET['toggle_active'])) {
         $stmtT = $db->prepare('UPDATE fahrzeuge SET is_active = 1 - is_active WHERE id = ?');
         $stmtT->execute([$toggleId]);
         setFlash('success', 'Fahrzeug-Status erfolgreich aktualisiert.');
-        header('Location: /admin/fahrzeuge.php');
-        exit;
+    } else {
+        setFlash('error', 'Sicherheits-Token ungültig. Bitte versuchen Sie es erneut.');
     }
+    header('Location: /admin/fahrzeuge.php');
+    exit;
 }
 
 $adminTitle = 'Fuhrpark & Fahrzeuge';

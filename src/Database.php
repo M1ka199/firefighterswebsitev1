@@ -24,8 +24,6 @@ class Database {
                 self::seedInitialData(self::$instance);
             } else {
                 self::initSchema(self::$instance);
-                self::ensureFahrzeugeData(self::$instance);
-                self::ensureHierarchienData(self::$instance);
             }
         }
         return self::$instance;
@@ -155,6 +153,10 @@ class Database {
         );
 SQL;
         $db->exec($schema);
+
+        try {
+            $db->exec("ALTER TABLE fahrzeuge ADD COLUMN responsible_person VARCHAR(150)");
+        } catch (Throwable $e) {}
     }
 
     public static function seedInitialData(PDO $db): void {
@@ -481,11 +483,6 @@ SQL;
     }
 
     public static function ensureFahrzeugeData(PDO $db): void {
-        // Migration: ensure responsible_person column exists
-        try {
-            $db->exec("ALTER TABLE fahrzeuge ADD COLUMN responsible_person VARCHAR(150)");
-        } catch (Throwable $e) {}
-
         $cnt = (int)$db->query("SELECT COUNT(*) FROM fahrzeuge")->fetchColumn();
         if ($cnt === 0) {
             $stmtIns = $db->prepare('
@@ -517,22 +514,8 @@ SQL;
                 '/assets/img/hero-firefighters.jpg',
                 2
             ]);
-        }
 
-        // Aktualisiere bestehende Fahrzeuge mit zuständiger Person falls noch leer
-        $db->exec("UPDATE fahrzeuge SET responsible_person = 'Gerätewart: Tobias Bornemann' WHERE name = 'LF 10' AND (responsible_person IS NULL OR responsible_person = '')");
-        $db->exec("UPDATE fahrzeuge SET responsible_person = 'Fahrzeugpate: Sarah Lindemann' WHERE name = 'MTW' AND (responsible_person IS NULL OR responsible_person = '')");
-
-        // Ergänze weitere Fahrzeuge falls weniger als 4 vorhanden sind
-        $cntNow = (int)$db->query("SELECT COUNT(*) FROM fahrzeuge")->fetchColumn();
-        if ($cntNow < 4) {
-            $stmtMore = $db->prepare('
-                INSERT INTO fahrzeuge 
-                (name, bezeichnung, tactical_role, callsign, responsible_person, description, technical_data, photo_url, sort_order, is_active)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
-            ');
-
-            $stmtMore->execute([
+            $stmtIns->execute([
                 'TLF 3000',
                 'Tanklöschfahrzeug TLF 3000',
                 'Vegetationsbrandbekämpfung & Wassertransport',
@@ -544,7 +527,7 @@ SQL;
                 3
             ]);
 
-            $stmtMore->execute([
+            $stmtIns->execute([
                 'GW-L',
                 'Gerätewagen Logistik / Transport',
                 'Logistik, Materialtransport & Sonderlagen',
